@@ -1,0 +1,136 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+// User model
+model User {
+  id        Int        @id @default(autoincrement())
+  cuid      String     @default(cuid()) @unique()
+  name      String     @db.VarChar(64)
+  email     String     @unique @db.VarChar(100)
+  password  String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @default(now())
+  isActive  Boolean    @default(true)
+  roles     UserRole[]
+  cartItems CartItem[]
+  orders    Order[]
+  adresses  Address[]
+
+  @@map("users")
+}
+
+// Role model
+model Role {
+  id          Int        @id @default(autoincrement())
+  cuid        String     @default(cuid()) @unique()
+  name        String     @db.VarChar(25)
+  description String
+  userRoles   UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
+
+  role   Role @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  roleId Int  @default(1)
+
+  assignedAt DateTime @default(now())
+  assignedBy Int      @default(1)
+
+  @@id([roleId, userId])
+  @@map("user_roles")
+}
+
+// city model
+model City {
+  id        Int       @id @default(autoincrement())
+  cuid      String    @default(cuid()) @unique()
+  name      String    @db.VarChar(25) @unique()
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @default(now())
+  adresses  Address[]
+
+  @@map("cities")
+}
+
+// address model
+model Address {
+  id     Int        @id @default(autoincrement())
+  cuid   String     @default(cuid()) @unique()
+  title  String
+  city   City       @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  cityId Int
+  user   User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
+  orders Order[]
+
+  @@map("adresses")
+}
+
+// product model
+model Product {
+  id          Int         @id @default(autoincrement())
+  cuid        String      @default(cuid()) @unique()
+  name        String      @db.VarChar(25)
+  price       Int         @db.MediumInt()
+  category    String      @db.VarChar(25)
+  description String
+  image       String
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @default(now())
+  cart        CartItem?
+  orderItems  OrderItem[]
+
+  @@map("products")
+}
+
+// shopping cart model
+model CartItem {
+  id        Int      @id @default(autoincrement())
+  cuid      String   @default(cuid()) @unique()
+  amount    Int      @db.SmallInt()
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId Int      @unique()
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+
+  @@map("cart_items")
+}
+
+// order model
+model Order {
+  id        Int         @id @default(autoincrement())
+  cuid      String      @default(cuid()) @unique()
+  user      User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    Int
+  address   Address     @relation(fields: [addressId], references: [id], onDelete: Cascade)
+  addressId Int
+  status    String
+  items     OrderItem[]
+
+  @@map("orders")
+}
+
+// ordrer item model
+model OrderItem {
+  id        Int     @id @default(autoincrement())
+  cuid      String  @default(cuid()) @unique()
+  amount    Int     @db.SmallInt()
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId Int
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  orderId   Int    
+
+  @@map("order_items")
+}

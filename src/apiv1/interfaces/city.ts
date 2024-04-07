@@ -1,0 +1,1 @@
+export interface City { name: string, cuid?: string }
